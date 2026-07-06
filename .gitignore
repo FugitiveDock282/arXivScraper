@@ -14,9 +14,9 @@ __pycache__/
 md_files/
 pdfs/
 
-## personal instance configs: real research topics/profile/credentials.
-## copy the `*.example` files in configs/ to get started.
+## do not track personal instances of config files
 configs/ai/ai_provider.toml
 configs/ai/user_profile.txt
 configs/search/*.toml
+## create copies of the `*.example` files under configs/ to get started
 !configs/search/example.toml
