@@ -164,6 +164,14 @@ def get_ai_response(
             "ai_response": response_text
         }
     except Exception as error:
+        fallback = _fallback_parse_rating_reason(response_text)
+        if fallback is not None:
+            return {
+                "status": "success",
+                "ai_rating": fallback["rating"],
+                "ai_reason": fallback["reason"],
+                "ai_response": response_text
+            }
         return {
             "status": "error",
             "error": f"JSON parsing failed: {error}",
@@ -171,6 +179,21 @@ def get_ai_response(
             "ai_reason": None,
             "ai_response": response_text
         }
+
+
+def _fallback_parse_rating_reason(
+    response_text: str,
+) -> dict[str, Any] | None:
+    """Recover `rating`/`reason` via regex when the model emits near-JSON with an unclosed or malformed string."""
+    rating_match = re.search(r'"rating"\s*:\s*([0-9]+(?:\.[0-9]+)?)', response_text)
+    reason_match = re.search(r'"reason"\s*:\s*"(.*)"\s*\}?\s*$', response_text, re.DOTALL)
+    if not rating_match or not reason_match:
+        return None
+    reason_text = reason_match.group(1).replace('\\"', '"').replace("\n", " ").strip()
+    return {
+        "rating": float(rating_match.group(1)),
+        "reason": reason_text,
+    }
 
 
 def get_ai_score(
