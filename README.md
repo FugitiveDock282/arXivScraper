@@ -11,7 +11,7 @@
 1. Clone the repository:
 
 ```bash
-git clone https://github.com/AstroKriel/arXivScraper.git
+git clone --single-branch https://github.com/AstroKriel/arXivScraper.git
 cd arXivScraper
 ```
 
