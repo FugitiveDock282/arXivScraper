@@ -13,3 +13,10 @@ __pycache__/
 ## output directories
 md_files/
 pdfs/
+
+## personal instance configs: real research topics/profile/credentials.
+## see the `nkriel/config` branch, or copy the `*.example` files in configs/.
+configs/ai/ai_provider.toml
+configs/ai/user_profile.txt
+configs/search/*.toml
+!configs/search/example.toml
