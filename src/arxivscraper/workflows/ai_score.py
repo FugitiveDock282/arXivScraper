@@ -20,12 +20,6 @@ from arxivscraper.config_paths import directories, files as config_files
 from arxivscraper.support import articles, file_io, script_cli
 
 ##
-## === CONSTANTS
-##
-
-_DEFAULT_MODEL = "gpt-4o-mini"
-
-##
 ## === AI PROVIDER CONFIG
 ##
 
@@ -35,34 +29,20 @@ def load_provider_config(
     cli_model: str | None = None,
     cli_base_url: str | None = None,
 ) -> dict[str, Any]:
-    """Load AI provider config from `configs/ai/ai_provider.toml`, falling back to the legacy `api_key.txt`.
+    """Load AI provider config from `configs/ai/ai_provider.toml`.
 
     CLI arguments override any config file values.
     """
     provider_path = directories.ai_configs_dir / config_files.ai_provider
-    if provider_path.is_file():
-        try:
-            with provider_path.open("rb") as file_pointer:
-                config = tomllib.load(file_pointer)
-        except Exception as error:
-            raise ValueError(f"error reading `{provider_path.name}`.") from error
-    else:
-        key_path = directories.ai_configs_dir / config_files.ai_api_key
-        if not key_path.is_file():
-            raise FileNotFoundError(
-                f"no AI config found; create `{provider_path.name}` "
-                f"(see `{config_files.ai_provider_example}`) "
-                f"or the legacy `{key_path.name}`.",
-            )
-        api_key = None
-        for line in key_path.read_text(encoding="utf-8").splitlines():
-            stripped = line.strip().strip("'").strip('"')
-            if stripped:
-                api_key = stripped
-                break
-        if not api_key:
-            raise ValueError(f"`{config_files.ai_api_key}` is empty.")
-        config = {"api_key": api_key, "base_url": None, "model": _DEFAULT_MODEL}
+    if not provider_path.is_file():
+        raise FileNotFoundError(
+            f"no AI config found; create `{provider_path.name}` (see `{config_files.ai_provider_example}`).",
+        )
+    try:
+        with provider_path.open("rb") as file_pointer:
+            config = tomllib.load(file_pointer)
+    except Exception as error:
+        raise ValueError(f"error reading `{provider_path.name}`.") from error
     if cli_model:
         config["model"] = cli_model
     if cli_base_url:
