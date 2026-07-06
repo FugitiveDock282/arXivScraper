@@ -176,6 +176,30 @@ def _fallback_parse_rating_reason(
     }
 
 
+def check_provider_reachable(
+    *,
+    ai_client: OpenAI,
+    ai_model: str,
+) -> None:
+    """Send one minimal request to `ai_model` and raise with a clear message if it fails.
+
+    Runs once before the scoring loop so a down/misconfigured provider fails fast with a single
+    diagnostic, instead of repeating the same connection/model error once per article.
+    """
+    response_dict = get_ai_response(
+        ai_client=ai_client,
+        article_title="Connectivity check.",
+        article_abstract="Connectivity check.",
+        prompt_rules='Reply with exactly this JSON: {"rating": 0, "reason": "ok"}',
+        prompt_criteria='Reply with exactly this JSON: {"rating": 0, "reason": "ok"}',
+        ai_model=ai_model,
+    )
+    if response_dict.get("status") != "success":
+        raise RuntimeError(
+            f"AI provider check failed: {response_dict.get('error', '<unknown error>')}",
+        )
+
+
 def get_ai_score(
     *,
     article: articles.Article,
@@ -229,6 +253,8 @@ def main() -> None:
     print(f"Model: {config['model']}")
     if config.get("base_url"):
         print(f"Base URL: {config['base_url']}")
+    print("Checking AI provider connectivity...")
+    check_provider_reachable(ai_client=ai_client, ai_model=config["model"])
     print("Reading in all articles...")
     articles_list = articles.read_all_markdown_files()
     articles_list = [article for article in articles_list if article.ai_rating is None]
