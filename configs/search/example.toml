@@ -1,0 +1,10 @@
+# Copy this file to <profile-name>.toml and edit the criteria below.
+# Pass the filename without extension as --config-name.
+
+authors = []
+categories = ["<arxiv-category>"]
+keywords_to_exclude = ["<keyword-a>"]
+keywords_to_include = [
+    "<keyword-b>",
+    ["<keyword-c>", ["<keyword-d>", "<keyword-e>"]],
+]

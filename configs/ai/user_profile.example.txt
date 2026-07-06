@@ -1,0 +1,9 @@
+# Copy this file to user_profile.txt and describe your research interests below.
+# This text is sent directly to the AI as scoring criteria, so write it as a first-person research profile.
+
+I study <topic>, focusing on <mechanisms/methods/context>.
+
+What I'm looking for:
+- <criterion a>
+- <criterion b>
+- <criterion c>

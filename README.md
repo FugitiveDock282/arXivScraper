@@ -134,9 +134,11 @@ uv run arxivscraper --download
 | `configs/ai/user_profile.txt` | scoring criteria sent to the AI |
 | `configs/ai/ai_guidelines.txt` | system prompt rules for AI scoring |
 
+`configs/search/*.toml`, `configs/ai/user_profile.txt`, and `configs/ai/ai_provider.toml` hold personal data (your research topics, credentials) and are gitignored on `main`. Copy the matching `*.example` file to get started, or keep your real configs on a personal branch (e.g. `username/config`) rebased on `main`.
+
 ### Search profiles
 
-Each `.toml` file in `configs/search/` defines one search profile. Pass the filename without extension as `--config-name`.
+Each `.toml` file in `configs/search/` defines one search profile. Copy `configs/search/example.toml` to `<profile>.toml` and pass the filename without extension as `--config-name`.
 
 ```toml
 authors = []
@@ -168,6 +170,10 @@ See `utests/test_filter.py` for examples in action.
 ### AI provider
 
 Copy `configs/ai/ai_provider.example.toml` to `configs/ai/ai_provider.toml` and fill in your values. Supports OpenAI, Anthropic, Ollama, and any OpenAI-compatible API.
+
+### User profile
+
+Copy `configs/ai/user_profile.example.txt` to `configs/ai/user_profile.txt` and describe your research interests. This text is sent directly to the AI as scoring criteria.
 
 ---
 
