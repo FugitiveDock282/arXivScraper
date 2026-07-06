@@ -18,7 +18,7 @@ from textual.widgets import DataTable, Footer, Header, Input, Static
 
 ## local
 from arxivscraper.config_paths import directories
-from arxivscraper.support import articles, file_io
+from arxivscraper.support import articles, dates, file_io
 from arxivscraper.support.articles import TaskStatus
 from arxivscraper.workflows import download_pdfs
 
@@ -257,15 +257,24 @@ class BrowseApp(App[None]):
         if not visible_articles:
             return
         article = visible_articles[row_index]
+        categories = ", ".join([article.category_primary, *article.category_others])
+        tags = ", ".join(article.config_tags) or "-"
         if article.ai_rating is None:
-            score_line = "[dim]Not yet scored.[/dim]"
+            score_block = "[bold]score:[/bold] [dim]not yet scored.[/dim]"
         else:
-            score_line = f"[bold]Score: {_format_score(article.ai_rating)}[/bold]  {rich_escape(article.ai_reason or '')}"
+            score_block = (
+                f"[bold]score:[/bold] {_format_score(article.ai_rating)}\n"
+                f"[bold]reason:[/bold] {rich_escape(article.ai_reason or '')}"
+            )
         self.query_one("#abstract", Static).update(
-            f"[bold]{rich_escape(article.title)}[/bold]\n"
-            f"[dim]{rich_escape(', '.join(article.authors))}[/dim]\n\n"
-            f"{score_line}\n\n"
-            f"{rich_escape(article.abstract)}",
+            f"[bold]title:[/bold] {rich_escape(article.title)}\n"
+            f"[bold]authors:[/bold] {rich_escape(', '.join(article.authors))}\n"
+            f"[bold]published:[/bold] {dates.as_date_string(article.date_published)}"
+            f"   [bold]updated:[/bold] {dates.as_date_string(article.date_updated)}\n"
+            f"[bold]categories:[/bold] {rich_escape(categories)}\n"
+            f"[bold]tags:[/bold] {rich_escape(tags)}\n\n"
+            f"[bold]abstract:[/bold] {rich_escape(article.abstract)}\n\n"
+            f"{score_block}",
         )
 
     def _update_subtitle(
