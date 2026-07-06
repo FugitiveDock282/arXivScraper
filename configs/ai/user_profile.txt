@@ -1,0 +1,8 @@
+I study how magnetic fields shape astrophysical systems by mediating amplification, transport, and feedback across scales. Contexts include the ISM, ICM, accretion disks, jets, and molecular clouds. I'm interested in theoretical models and MHD simulations that explain mechanisms and scalings.
+
+What I'm looking for:
+- Magnetic field amplification: small-scale dynamo, mean-field dynamo, MRI and angular-momentum transport.
+- Magnetized turbulence and energy transfer: dynamical alignment, velocity-magnetic alignment, cross-helicity, scale-dependent alignment, Maxwell vs Reynolds stresses, pressure-strain coupling, Alfvenic cascade, reconnection-mediated transfer.
+- Multi-scale structuring and evolution: anisotropy, intermittency, and how fields organise structure from molecular clouds to galaxies and clusters.
+- Non-ideal MHD that materially changes dynamics: ambipolar diffusion, Hall MHD, Ohmic diffusion.
+- Studies that connect mechanisms to consequences for system evolution: star formation regulation, ISM/ICM heating, angular momentum transport.

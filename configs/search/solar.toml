@@ -1,0 +1,12 @@
+authors = []
+categories = [
+    "astro-ph.SR",
+    "physics.space-ph",
+    "physics.plasm-ph",
+]
+keywords_to_exclude = ["machine"]
+keywords_to_include = [
+    ["solar", "wind", ["turb", "magnet", "alfven", "reconnect", "helicit", "compress"]],
+    ["heliosphere", ["turb", "magnet", "alfven", ["cosmic", "ray"]]],
+    ["parker", "solar", "probe", ["turb", "magnet", "alfven", "reconnect"]],
+]

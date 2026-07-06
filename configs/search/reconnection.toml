@@ -1,0 +1,15 @@
+authors = []
+categories = [
+    "astro-ph.GA",
+    "astro-ph.HE",
+    "astro-ph.SR",
+    "physics.plasm-ph",
+    "physics.flu-dyn",
+    "physics.space-ph",
+]
+keywords_to_exclude = ["rmhd", "gr-mhd", "relativis", "tokamak", "machine"]
+keywords_to_include = [
+    "plasmoid",
+    ["tearing", ["instabilit", "mode", "magnet"]],
+    ["reconnect", ["turb", "magnet", "mhd", "plasmoid", "tearing"]],
+]

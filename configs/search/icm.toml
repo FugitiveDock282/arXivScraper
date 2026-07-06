@@ -1,0 +1,12 @@
+authors = []
+categories = [
+    "astro-ph.GA",
+    "astro-ph.HE",
+    "astro-ph.CO",
+]
+keywords_to_exclude = ["machine"]
+keywords_to_include = [
+    ["intracluster", ["turb", "magnet", "dynamo", "plasma"]],
+    ["ICM", ["turb", "magnet", "dynamo", "heat", ["cool", "core"]]],
+    ["galaxy", "cluster", ["turb", "magnet", "dynamo", "plasma", ["cool", "core"]]],
+]

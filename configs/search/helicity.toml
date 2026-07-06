@@ -1,0 +1,16 @@
+authors = []
+categories = [
+    "astro-ph.GA",
+    "astro-ph.HE",
+    "astro-ph.SR",
+    "astro-ph.CO",
+    "physics.plasm-ph",
+    "physics.flu-dyn",
+]
+keywords_to_exclude = ["machine"]
+keywords_to_include = [
+    ["magnet", "helicit"],
+    ["cross", "helicit"],
+    ["helicit", ["dynamo", "mhd", ["inverse", "cascade"], "chiral", "primordial", "turb"]],
+    ["inverse", "cascade", ["magnet", "helicit"]],
+]
