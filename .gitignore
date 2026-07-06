@@ -11,7 +11,7 @@ __pycache__/
 *.gitignored
 
 ## output directories
-md_files/
+## md_files/ is intentionally tracked on this branch (personal paper database backup)
 pdfs/
 
 ## do not track personal instances of config files
