@@ -80,6 +80,7 @@ uv run arxivscraper --browse
 | `e` | open markdown file in the default editor |
 | `f` | cycle filter between `p`, `q`, `r`, `d`, `n`, and `x` states |
 | `s` | toggle text search |
+| `S` | toggle sort between date and AI score |
 | `escape` | quit |
 
 ### Score

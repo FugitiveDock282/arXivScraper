@@ -37,6 +37,12 @@ _FILTER_CYCLE: list[TaskStatus | None] = [
 ]
 
 
+def _format_score(
+    ai_rating: float | None,
+) -> str:
+    return "-" if ai_rating is None else f"{ai_rating:g}"
+
+
 class SearchInput(Input):
     """Search box that can hand focus back to the results table."""
 
@@ -123,6 +129,11 @@ class BrowseApp(App[None]):
             description="search",
         ),
         Binding(
+            key="S",
+            action="toggle_sort",
+            description="sort",
+        ),
+        Binding(
             key="escape",
             action="escape",
             description="quit",
@@ -137,6 +148,7 @@ class BrowseApp(App[None]):
         self.all_articles = articles_list
         self.filter_status: TaskStatus | None = None
         self.search_query = ""
+        self.sort_by_score = False
 
     def compose(
         self,
@@ -157,7 +169,7 @@ class BrowseApp(App[None]):
         search_input = self.query_one(Input)
         search_input.display = False
         table.cursor_type = "row"
-        table.add_columns("Status", "Tags", "Category", "Date", "ID", "Title")
+        table.add_columns("Status", "Score", "Tags", "Category", "Date", "ID", "Title")
         table.focus()
         self._refresh_table()
 
@@ -178,6 +190,14 @@ class BrowseApp(App[None]):
                     query=self.search_query,
                 )
             ]
+        if self.sort_by_score:
+            visible_articles = sorted(
+                visible_articles,
+                key=lambda article: (
+                    article.ai_rating if article.ai_rating is not None else -1
+                ),
+                reverse=True,
+            )
         return visible_articles
 
     def _article_matches_query(
@@ -210,6 +230,7 @@ class BrowseApp(App[None]):
         for article in visible_articles:
             table.add_row(
                 article.task_status.value,
+                _format_score(article.ai_rating),
                 " ".join(article.config_tags),
                 article.category_primary,
                 str(article.date_updated),
@@ -236,9 +257,14 @@ class BrowseApp(App[None]):
         if not visible_articles:
             return
         article = visible_articles[row_index]
+        if article.ai_rating is None:
+            score_line = "[dim]Not yet scored.[/dim]"
+        else:
+            score_line = f"[bold]Score: {_format_score(article.ai_rating)}[/bold]  {rich_escape(article.ai_reason or '')}"
         self.query_one("#abstract", Static).update(
             f"[bold]{rich_escape(article.title)}[/bold]\n"
             f"[dim]{rich_escape(', '.join(article.authors))}[/dim]\n\n"
+            f"{score_line}\n\n"
             f"{rich_escape(article.abstract)}",
         )
 
@@ -248,9 +274,11 @@ class BrowseApp(App[None]):
         visible_articles = self._get_visible_articles()
         filter_label = "all" if self.filter_status is None else self.filter_status.value
         search_label = self.search_query if self.search_query else "off"
+        sort_label = "score" if self.sort_by_score else "date"
         self.sub_title = (
             f"filter: {filter_label}  "
             f"search: {search_label}  "
+            f"sort: {sort_label}  "
             f"({len(visible_articles)} papers)"
         )
 
@@ -331,6 +359,12 @@ class BrowseApp(App[None]):
     ) -> None:
         current_index = _FILTER_CYCLE.index(self.filter_status)
         self.filter_status = _FILTER_CYCLE[(current_index + 1) % len(_FILTER_CYCLE)]
+        self._refresh_table()
+
+    def action_toggle_sort(
+        self,
+    ) -> None:
+        self.sort_by_score = not self.sort_by_score
         self._refresh_table()
 
     def action_toggle_search(
