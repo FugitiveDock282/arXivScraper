@@ -6,7 +6,7 @@
 
 ---
 
-## Installation
+## Getting setup
 
 1. Clone the repository:
 
@@ -177,6 +177,41 @@ Copy `configs/ai/user_profile.example.txt` to `configs/ai/user_profile.txt` and 
 
 ---
 
+## Run test suites
+
+Run the suite of unit tests:
+
+```bash
+uv run pytest
+```
+
+---
+
+## File structure
+
+```text
+arXivScraper/
+├── src/
+│   └── arxivscraper/
+│       ├── app.py  # entrypoint
+│       ├── config_paths/  # path resolution helpers
+│       ├── support/  # article, date, file-io, CLI, and search-criteria utilities
+│       └── workflows/  # search, browse, score, retag, fetch, and download workflows
+├── configs/
+│   ├── ai/  # AI provider, user profile, and guideline configs
+│   └── search/  # search profile configs
+├── utests/
+│   ├── test_article_utils.py
+│   └── test_filter.py
+├── example-tui.png
+├── pyproject.toml  # project metadata and dependencies
+├── uv.lock  # lock file (used by uv to pin dependencies)
+├── LICENSE.md  # terms of use and distribution
+└── README.md  # this file
+```
+
+---
+
 ## License
 
-This project is licensed under the MIT License; see [LICENSE](./LICENSE.md) for details.
+This project is licensed under the MIT License; see the [LICENSE.md](./LICENSE.md) file for details.
