@@ -7,6 +7,9 @@ authors = [{ name = "Neco Kriel", email = "necokriel@gmail.com" }]
 requires-python = ">=3.13"
 dependencies = [
     "arxiv>=2.2.0",
+    "google-auth>=2.37.0",
+    "google-auth-oauthlib>=1.4.0",
+    "gspread>=6.2.0",
     "numpy>=2.2.5",
     "openai>=1.76.2",
     "requests>=2.32.0",
