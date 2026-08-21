@@ -132,6 +132,10 @@ def get_ai_response(
     response_text = ""
     try:
         response_text = (ai_response.choices[0].message.content or "").strip()
+        ## strip markdown code fences (e.g. ```json ... ```) if the model wrapped its JSON
+        fenced = re.match(r'^\s*```(?:json)?\s*(.*?)\s*```\s*$', response_text, re.DOTALL)
+        if fenced:
+            response_text = fenced.group(1).strip()
         ## sanitise invalid JSON escape sequences (e.g. LaTeX \gt, \cdot) before parsing
         sanitised = re.sub(r'\\(?!["\\/bfnrtu])', r'\\\\', response_text)
         response_dict = json.loads(sanitised)
