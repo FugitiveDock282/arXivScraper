@@ -143,6 +143,13 @@ class CLIParser:
             dest="base_url",
             help="API base URL override. Overrides configs/ai/ai_provider.toml.",
         )
+        score_args.add_argument(
+            "--rescore",
+            action="store_true",
+            required=False,
+            default=False,
+            help="Also re-score articles that already have a rating.",
+        )
 
     def get_program_inputs(
         self,
@@ -188,7 +195,7 @@ class CLIParser:
         self,
     ) -> dict[str, Any]:
         """Return score-specific CLI overrides; `None` values mean 'use config file'."""
-        return {key: self.args.get(key) for key in ["model", "base_url"]}
+        return {key: self.args.get(key) for key in ["model", "base_url", "rescore"]}
 
     def get_fetch_inputs(
         self,

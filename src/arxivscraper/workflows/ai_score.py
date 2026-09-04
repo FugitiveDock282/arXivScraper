@@ -373,7 +373,9 @@ def main() -> None:
     check_provider_reachable(ai_client=ai_client, ai_model=config["model"])
     print("Reading in all articles...")
     articles_list = articles.read_all_markdown_files()
-    articles_list = [article for article in articles_list if article.ai_rating is None]
+    rescore = bool(score_inputs.get("rescore"))
+    if not rescore:
+        articles_list = [article for article in articles_list if article.ai_rating is None]
     num_articles = len(articles_list)
     print(f"Preparing to score {num_articles} articles.")
     prompt_rules = file_io.read_text_file(directories.ai_configs_dir / config_files.ai_rules)

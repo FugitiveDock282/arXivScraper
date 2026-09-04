@@ -91,7 +91,9 @@ Score all unrated papers using an AI provider:
 uv run arxivscraper --score
 ```
 
-Pass `--model <model>` or `--base-url <url>` to override the values in `configs/ai/ai_provider.toml`.
+Pass `--model <model>` or `--base-url <url>` to override the values in `configs/ai/ai_provider.toml`. By default only unrated papers are scored; pass `--rescore` to re-score every paper (e.g. after changing the guidelines or scoring provider).
+
+Alongside each rating and reason, the model is asked to return verbatim quotes from the abstract that it treated as supporting (`positive`) or counting against (`negative`) the score. These quotes are stored on the paper and, after a `--sync`, shown colour-coded in the spreadsheet's abstract column — green for passages that added to the rating, red for passages that subtracted.
 
 ### Retag
 
@@ -125,15 +127,15 @@ uv run arxivscraper --download
 
 ### Sync
 
-Sync papers between the mdfiles and a Google Sheets spreadsheet:
+Sync papers between the mdfiles and a local spreadsheet workbook:
 
 ```bash
 uv run arxivscraper --sync
 ```
 
-The spreadsheet acts as a view + editing surface: each row is one paper, with one column per field shown by the browser (status, score, tags, category, dates, authors, title, abstract, AI reason, PDF URL). Running `--sync` pulls changes made in the sheet back to the mdfiles and then pushes the mdfiles to the sheet. The direction is controlled by `sync_mode` in `configs/sheets/sheets_config.toml` (`push`, `pull`, or `bidirectional`); the `Papers` tab is created automatically on first run.
+The workbook acts as a view + editing surface: each row is one paper, with one column per field shown by the browser (status, score, tags, category, dates, authors, title, abstract, AI reason, PDF URL). Running `--sync` pulls changes made in the sheet back to the mdfiles and then pushes the mdfiles to the sheet. The direction is controlled by `sync_mode` in `configs/sheets/sheets_config.toml` (`push`, `pull`, or `bidirectional`).
 
-Authentication can use a Google service account (`service_account_json`) or your own Google account via OAuth (`oauth_client_json` + `token_json`). On the first OAuth run your browser opens once for consent and the token is stored in `token_json`; subsequent runs reuse it. See `configs/sheets/sheets_config.example.toml` for details.
+The sync target is a plain `.xlsx` workbook on disk (see `spreadsheet_path`, defaulting to `configs/sheets/papers.xlsx`). Open it in Excel or LibreOffice, edit cells, save, and re-run `--sync`. The workbook and the `Papers` tab are created automatically on the first push. Because sync updates cell contents in place, cosmetic formatting you apply (bold headers, fills, column widths, freeze panes, etc.) survives every `--sync`; only the paper data is rewritten. The abstract column is written as rich text, so the AI's `positive`/`negative` quote evidence appears highlighted green/red right in the sheet. See `configs/sheets/sheets_config.example.toml` for details.
 
 ---
 
@@ -145,7 +147,7 @@ Authentication can use a Google service account (`service_account_json`) or your
 | `configs/ai/ai_provider.toml` | optional AI provider settings (model, API key, base URL) |
 | `configs/ai/user_profile.txt` | scoring criteria sent to the AI |
 | `configs/ai/ai_guidelines.txt` | system prompt rules for AI scoring |
-| `configs/sheets/sheets_config.toml` | Google Sheets sync settings (spreadsheet, auth, sync mode) |
+| `configs/sheets/sheets_config.toml` | local spreadsheet sync settings (workbook path, sheet, sync mode) |
 
 `configs/search/*.toml`, `configs/ai/user_profile.txt`, and `configs/ai/ai_provider.toml` hold personal data (your research topics, credentials) and are gitignored on `main`. Copy the matching `*.example` file to get started, or keep your real configs on a personal branch (e.g. `username/config`) rebased on `main`.
 
@@ -213,7 +215,7 @@ arXivScraper/
 ├── configs/
 │   ├── ai/  # AI provider, user profile, and guideline configs
 │   ├── search/  # search profile configs
-│   └── sheets/  # Google Sheets sync configs
+│   └── sheets/  # local spreadsheet sync configs
 ├── utests/
 │   ├── test_article_utils.py
 │   └── test_filter.py
