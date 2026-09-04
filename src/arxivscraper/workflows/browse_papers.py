@@ -138,6 +138,13 @@ class BrowseApp(App[None]):
             action="escape",
             description="quit",
         ),
+        Binding(
+            key="ctrl+c",
+            action="quit",
+            description="quit",
+            priority=True,
+            show=False,
+        ),
     ]
 
     def __init__(
