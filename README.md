@@ -1,6 +1,12 @@
 # arXivScraper
 Fork of [this awesome repo by AstroKriel](https://github.com/AstroKriel/arXivScraper), **arxivscraper** is a lightweight paper management tool for finding and managing arXiv papers that are relevant for you.
 
+> [!IMPORTANT]
+> What does this fork do differently than the original repo?
+> 1. A way to visualise results on a spreadsheet. This is a new feature, and is currently only an alternative way to view alongside `arxivscraper --browse` or make minor edits. This is meant to be a more accessible way of interacting with the app in the long-term.
+> 2. `arxivscraper --score` now also highlights portions of the abstract that added positively/negatively to the final score.
+> 3. Minor bugfix with `json` parsing, the added ability to quit with `Ctrl+C`, and other small tweaks for my personal preference.
+
 ![TUI browser](./example-tui.png?v=2)
 
 ---
