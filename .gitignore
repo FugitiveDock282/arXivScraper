@@ -19,8 +19,7 @@ configs/ai/ai_provider.toml
 configs/ai/user_profile.txt
 configs/search/*.toml
 configs/sheets/sheets_config.toml
-## Google Sheets OAuth credentials and tokens
-configs/sheets/client_secret.json
-configs/sheets/token.json
+## local spreadsheet sync workbook
+configs/sheets/*.xlsx
 ## create copies of the `*.example` files under configs/ to get started
 !configs/search/example.toml

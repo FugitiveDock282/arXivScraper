@@ -1,20 +1,11 @@
 # Copy this file to sheets_config.toml and fill in your values.
 
-## --- choose ONE authentication method (uncomment the one you use):
-
-# (A) Service account: path to a service account credentials JSON from the Google Cloud
-#     Console. You must share the spreadsheet with the service account's email address.
-# service_account_json = "path/to/service_account.json"
-
-# (B) User OAuth: path to an OAuth client JSON (Desktop app type) from the Google Cloud
-#     Console, and the path where the authorization token is stored after first sign-in
-#     (created automatically on the first run).
-# oauth_client_json = "path/to/client_secret.json"
-# token_json = "path/to/token.json"
-
-# The spreadsheet to sync; provide either `spreadsheet_id` or `spreadsheet_url`.
-spreadsheet_id = ""
-spreadsheet_url = ""
+# The local spreadsheet to sync, as a path to an `.xlsx` workbook. The workbook
+# (and the `sheet_name` tab inside it) is created automatically on the first
+# `--sync` push. Relative paths are resolved against this file's directory
+# (`configs/sheets/`). Open it in Excel/LibreOffice to edit papers and run
+# `arxivscraper --sync` to pull those edits back into the mdfiles.
+spreadsheet_path = "papers.xlsx"
 
 # Name of the worksheet (tab) that holds the paper rows.
 sheet_name = "Papers"
