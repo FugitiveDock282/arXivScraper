@@ -41,6 +41,7 @@ arxivscraper --score
 arxivscraper --retag
 arxivscraper --fetch -id <arxiv-id>
 arxivscraper --download
+arxivscraper --sync
 ```
 
 ---
@@ -122,6 +123,18 @@ Alternatively, you can also run the download step directly from the terminal:
 uv run arxivscraper --download
 ```
 
+### Sync
+
+Sync papers between the mdfiles and a Google Sheets spreadsheet:
+
+```bash
+uv run arxivscraper --sync
+```
+
+The spreadsheet acts as a view + editing surface: each row is one paper, with one column per field shown by the browser (status, score, tags, category, dates, authors, title, abstract, AI reason, PDF URL). Running `--sync` pulls changes made in the sheet back to the mdfiles and then pushes the mdfiles to the sheet. The direction is controlled by `sync_mode` in `configs/sheets/sheets_config.toml` (`push`, `pull`, or `bidirectional`); the `Papers` tab is created automatically on first run.
+
+Authentication can use a Google service account (`service_account_json`) or your own Google account via OAuth (`oauth_client_json` + `token_json`). On the first OAuth run your browser opens once for consent and the token is stored in `token_json`; subsequent runs reuse it. See `configs/sheets/sheets_config.example.toml` for details.
+
 ---
 
 ## Configuration
@@ -132,6 +145,7 @@ uv run arxivscraper --download
 | `configs/ai/ai_provider.toml` | optional AI provider settings (model, API key, base URL) |
 | `configs/ai/user_profile.txt` | scoring criteria sent to the AI |
 | `configs/ai/ai_guidelines.txt` | system prompt rules for AI scoring |
+| `configs/sheets/sheets_config.toml` | Google Sheets sync settings (spreadsheet, auth, sync mode) |
 
 `configs/search/*.toml`, `configs/ai/user_profile.txt`, and `configs/ai/ai_provider.toml` hold personal data (your research topics, credentials) and are gitignored on `main`. Copy the matching `*.example` file to get started, or keep your real configs on a personal branch (e.g. `username/config`) rebased on `main`.
 
@@ -198,7 +212,8 @@ arXivScraper/
 │       └── workflows/  # search, browse, score, retag, fetch, and download workflows
 ├── configs/
 │   ├── ai/  # AI provider, user profile, and guideline configs
-│   └── search/  # search profile configs
+│   ├── search/  # search profile configs
+│   └── sheets/  # Google Sheets sync configs
 ├── utests/
 │   ├── test_article_utils.py
 │   └── test_filter.py

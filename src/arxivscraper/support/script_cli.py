@@ -60,6 +60,7 @@ class CLIParser:
             ("-b", "--browse"),
             ("-d", "--download"),
             ("-t", "--retag"),
+            ("-y", "--sync"),
         ]:
             parse_flags.add_argument(
                 short_flag,
@@ -147,13 +148,13 @@ class CLIParser:
         self,
     ) -> dict[str, Any]:
         """Return main program flags; ensure at least one is set."""
-        main_flags = ["search", "fetch", "score", "browse", "download", "retag"]
+        main_flags = ["search", "fetch", "score", "browse", "download", "retag", "sync"]
         if not any(self.args.get(flag) for flag in main_flags):
             print(
-                "Error: At least one of the following flags must be provided: --search, --fetch, --score, --download, --retag\n",
+                "Error: At least one of the following flags must be provided: --search, --fetch, --score, --browse, --download, --retag, --sync\n",
             )
             self.parser.print_help()
-        return {key: self.args.get(key) for key in ["search", "fetch", "score", "browse", "download", "retag"]}
+        return {key: self.args.get(key) for key in ["search", "fetch", "score", "browse", "download", "retag", "sync"]}
 
     def get_search_inputs(
         self,
