@@ -130,6 +130,13 @@ def merge_pull_article(
     if existing is None:
         return incoming
     incoming.config_reasons = existing.config_reasons
+    if incoming.abstract != existing.abstract:
+        ## AI evidence quotes were resolved against the existing abstract; once the
+        ## abstract text changes they no longer point at valid spans, so drop them.
+        incoming.ai_evidence = []
+    else:
+        ## the sheet carries no evidence column; retain the mdfile's evidence unchanged
+        incoming.ai_evidence = list(existing.ai_evidence)
     if not incoming.config_tags:
         incoming.config_tags = list(existing.config_tags)
     if incoming.ai_rating is None:

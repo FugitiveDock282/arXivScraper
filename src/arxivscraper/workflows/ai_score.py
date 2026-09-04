@@ -95,6 +95,7 @@ def get_ai_response(
             "error": "Missing article title.",
             "ai_rating": None,
             "ai_reason": None,
+            "ai_evidence": [],
             "ai_response": None
         }
     if not article_abstract:
@@ -103,6 +104,7 @@ def get_ai_response(
             "error": "Missing article abstract.",
             "ai_rating": None,
             "ai_reason": None,
+            "ai_evidence": [],
             "ai_response": None
         }
     prompt_input = f"{prompt_criteria}\n\nTITLE: {article_title}\n\nABSTRACT: {article_abstract}"
@@ -127,26 +129,12 @@ def get_ai_response(
             "error": f"API call failed: {error}",
             "ai_rating": None,
             "ai_reason": None,
+            "ai_evidence": [],
             "ai_response": None
         }
-    response_text = ""
+    response_text = (ai_response.choices[0].message.content or "").strip()
     try:
-        response_text = (ai_response.choices[0].message.content or "").strip()
-        ## strip markdown code fences (e.g. ```json ... ```) if the model wrapped its JSON
-        fenced = re.match(r'^\s*```(?:json)?\s*(.*?)\s*```\s*$', response_text, re.DOTALL)
-        if fenced:
-            response_text = fenced.group(1).strip()
-        ## sanitise invalid JSON escape sequences (e.g. LaTeX \gt, \cdot) before parsing
-        sanitised = re.sub(r'\\(?!["\\/bfnrtu])', r'\\\\', response_text)
-        response_dict = json.loads(sanitised)
-        ai_rating = float(response_dict["rating"])
-        ai_reason = response_dict["reason"]
-        return {
-            "status": "success",
-            "ai_rating": ai_rating,
-            "ai_reason": ai_reason,
-            "ai_response": response_text
-        }
+        parsed = parse_llm_json(response_text)
     except Exception as error:
         fallback = _fallback_parse_rating_reason(response_text)
         if fallback is not None:
@@ -154,6 +142,7 @@ def get_ai_response(
                 "status": "success",
                 "ai_rating": fallback["rating"],
                 "ai_reason": fallback["reason"],
+                "ai_evidence": [],
                 "ai_response": response_text
             }
         return {
@@ -161,8 +150,130 @@ def get_ai_response(
             "error": f"JSON parsing failed: {error}",
             "ai_rating": None,
             "ai_reason": None,
+            "ai_evidence": [],
             "ai_response": response_text
         }
+    return {
+        "status": "success",
+        "ai_rating": parsed["rating"],
+        "ai_reason": parsed["reason"],
+        "ai_evidence": resolve_ai_evidence(
+            abstract=article_abstract,
+            rationale=parsed["rationale"],
+        ),
+        "ai_response": response_text
+    }
+
+
+def parse_llm_json(
+    response_text: str,
+) -> dict[str, Any]:
+    """Parse a scored JSON payload, returning `rating`, `reason`, and raw `rationale`.
+
+    Raises on malformed JSON. `rationale` is optional and defaults to an empty list,
+    so a plain `{"rating", "reason"}` response still parses.
+    """
+    ## strip markdown code fences (e.g. ```json ... ```) if the model wrapped its JSON
+    fenced = re.match(r'^\s*```(?:json)?\s*(.*?)\s*```\s*$', response_text, re.DOTALL)
+    if fenced:
+        response_text = fenced.group(1).strip()
+    ## sanitise invalid JSON escape sequences (e.g. LaTeX \gt, \cdot) before parsing
+    sanitised = re.sub(r'\\(?!["\\/bfnrtu])', r'\\\\', response_text)
+    response_dict = json.loads(sanitised)
+    reason = response_dict["reason"]
+    if reason is None:
+        reason = ""
+    rationale = response_dict.get("rationale") or []
+    if not isinstance(rationale, list):
+        rationale = []
+    return {
+        "rating": float(response_dict["rating"]),
+        "reason": str(reason),
+        "rationale": rationale,
+    }
+
+
+def find_quote_span(
+    abstract: str,
+    quote: str,
+) -> str | None:
+    """Return the verbatim substring of `abstract` that `quote` refers to, or `None`.
+
+    The quote must be a contiguous run of the abstract's words; single differences in
+    whitespace (or case, as a fallback) are tolerated because models rarely reproduce
+    spacing exactly. Returns the exact stored text so highlighting never re-parses.
+    """
+    quote_tokens = quote.split()
+    if not quote_tokens or not abstract:
+        return None
+    abstract_tokens = [
+        match.group()
+        for match in re.finditer(r"\S+", abstract)
+    ]
+    if len(quote_tokens) > len(abstract_tokens):
+        return None
+    ## positions of each abstract token within the original string
+    token_bounds = [
+        (match.start(), match.end())
+        for match in re.finditer(r"\S+", abstract)
+    ]
+
+    def _match_at(
+        offset: int,
+        *,
+        case_sensitive: bool,
+    ) -> bool:
+        for token_index, quote_token in enumerate(quote_tokens):
+            abstract_token = abstract_tokens[offset + token_index]
+            if not case_sensitive:
+                abstract_token = abstract_token.lower()
+                quote_token = quote_token.lower()
+            if abstract_token != quote_token:
+                return False
+        return True
+
+    window = len(quote_tokens)
+    for offset in range(len(abstract_tokens) - window + 1):
+        if _match_at(offset, case_sensitive=True):
+            start = token_bounds[offset][0]
+            end = token_bounds[offset + window - 1][1]
+            return abstract[start:end]
+    for offset in range(len(abstract_tokens) - window + 1):
+        if _match_at(offset, case_sensitive=False):
+            start = token_bounds[offset][0]
+            end = token_bounds[offset + window - 1][1]
+            return abstract[start:end]
+    return None
+
+
+def resolve_ai_evidence(
+    *,
+    abstract: str,
+    rationale: list[Any],
+) -> list[articles.EvidenceQuote]:
+    """Turn raw `rationale` items into `EvidenceQuote`s whose quotes exist verbatim in `abstract`.
+
+    Items with an unrecognised `effect`, a missing/unresolvable quote, or duplicate
+    (quote, effect) pairs are dropped.
+    """
+    evidence: list[articles.EvidenceQuote] = []
+    seen: set[tuple[str, str]] = set()
+    for item in rationale:
+        if not isinstance(item, dict):
+            continue
+        effect = str(item.get("effect", "")).strip().lower()
+        if not articles.is_supported_effect(effect):
+            continue
+        quote = str(item.get("quote", "")).strip()
+        resolved = find_quote_span(abstract, quote)
+        if resolved is None:
+            continue
+        key = (resolved, effect)
+        if key in seen:
+            continue
+        seen.add(key)
+        evidence.append(articles.EvidenceQuote(quote=resolved, effect=effect))
+    return evidence
 
 
 def _fallback_parse_rating_reason(
@@ -212,7 +323,7 @@ def get_ai_score(
     prompt_criteria: str,
     ai_model: str,
 ) -> bool:
-    """Score `article` using the AI model; mutate its `ai_rating` and `ai_reason` on success."""
+    """Score `article` using the AI model; mutate its `ai_rating`, `ai_reason`, and `ai_evidence` on success."""
     time_start = time.time()
     response_dict = get_ai_response(
         ai_client=ai_client,
@@ -235,6 +346,7 @@ def get_ai_score(
     print(f"Elapsed time: {time_elapsed:.2f} seconds.")
     article.ai_rating = response_dict.get("ai_rating")
     article.ai_reason = response_dict.get("ai_reason")
+    article.ai_evidence = list(response_dict.get("ai_evidence") or [])
     return True
 
 

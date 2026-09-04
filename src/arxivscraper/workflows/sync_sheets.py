@@ -64,15 +64,28 @@ def push_to_sheets(
     *,
     config: dict[str, Any],
 ) -> None:
-    """Write all mdfiles as rows into the local spreadsheet, overwriting the data area."""
+    """Write all mdfiles as rows into the local spreadsheet, overwriting the data area.
+
+    Abstracts with AI evidence are written as rich text so the flagged quotes show
+    up green (positive) or red (negative); plain-text abstracts are written as-is.
+    """
     spreadsheet = local_sheet.LocalSpreadsheet(
         file_path=config["spreadsheet_path"],
         sheet_name=config["sheet_name"],
     )
     articles_list = articles.read_all_markdown_files()
-    rows = [sheet_mapping.header_row()] + [
-        sheet_mapping.article_to_row(article) for article in articles_list
-    ]
+    abstract_column = sheet_mapping.SHEET_HEADER.index("abstract")
+    rows: list[list[Any]] = [sheet_mapping.header_row()]
+    for article in articles_list:
+        row: list[Any] = sheet_mapping.article_to_row(article)
+        row[abstract_column] = local_sheet.render_abstract_cell(
+            abstract=article.abstract,
+            highlights=[
+                (quote.quote, quote.effect)
+                for quote in article.ai_evidence
+            ],
+        )
+        rows.append(row)
     spreadsheet.write_all_rows(rows)
     print(
         f"Pushed {len(articles_list)} article(s) to "

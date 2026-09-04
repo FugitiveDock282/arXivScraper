@@ -11,6 +11,9 @@ from typing import Any
 
 ## third-party
 import openpyxl
+from openpyxl.cell.rich_text import CellRichText, TextBlock
+from openpyxl.cell.text import InlineFont
+from openpyxl.styles.colors import Color
 
 ##
 ## === LOCAL SPREADSHEET STORE
@@ -50,6 +53,73 @@ def _cell_to_text(
     if isinstance(cell, float) and cell.is_integer():
         return str(int(cell))
     return str(cell)
+
+
+##
+## === RICH-TEXT ABSTRACT HIGHLIGHTING
+##
+
+## per-effect font colour (ARGB) used to colour the verbatim abstract quotes the AI
+## flagged as supporting (positive) or counting against (negative) its rating.
+_HIGHLIGHT_COLORS: dict[str, str] = {
+    "positive": "FF00B050",
+    "negative": "FFC00000",
+}
+
+
+def render_abstract_cell(
+    abstract: str,
+    highlights: list[tuple[str, str]],
+) -> str | CellRichText:
+    """Render `abstract` as rich text, colouring each (quote, effect) highlight.
+
+    Quotes are matched verbatim against `abstract` (they were already resolved to
+    exact substrings at scoring time); the first non-overlapping occurrence of each
+    quote is coloured green (`positive`) or red (`negative`). If nothing matches,
+    or `highlights` is empty, `abstract` is returned unchanged as plain text.
+    """
+    spans = _collect_highlight_spans(
+        abstract=abstract,
+        highlights=highlights,
+    )
+    if not spans:
+        return abstract
+    rich_text = CellRichText()
+    cursor = 0
+    for start, end, color in spans:
+        if start > cursor:
+            rich_text.append(abstract[cursor:start])
+        rich_text.append(TextBlock(InlineFont(color=Color(rgb=color)), abstract[start:end]))
+        cursor = end
+    if cursor < len(abstract):
+        rich_text.append(abstract[cursor:])
+    return rich_text
+
+
+def _collect_highlight_spans(
+    *,
+    abstract: str,
+    highlights: list[tuple[str, str]],
+) -> list[tuple[int, int, str]]:
+    """Resolve (quote, effect) pairs to non-overlapping (start, end, colour) spans in `abstract`."""
+    candidates: list[tuple[int, int, str]] = []
+    for quote, effect in highlights:
+        color = _HIGHLIGHT_COLORS.get(effect)
+        if not color or not quote:
+            continue
+        start = abstract.find(quote)
+        if start == -1:
+            continue
+        candidates.append((start, start + len(quote), color))
+    candidates.sort()
+    spans: list[tuple[int, int, str]] = []
+    last_end = 0
+    for start, end, color in candidates:
+        if start < last_end:
+            continue
+        spans.append((start, end, color))
+        last_end = end
+    return spans
 
 
 class LocalSpreadsheet:
@@ -127,7 +197,8 @@ class LocalSpreadsheet:
         Values are written in place: cells that already exist keep their style
         (bold headers, fills, column widths, etc. survive a rewrite). Any content
         that previously existed but falls outside the new grid is cleared, but
-        the formatting of those cells is left untouched.
+        the formatting of those cells is left untouched. A cell value may be
+        plain text or rich text (`CellRichText`) for coloured highlighting.
 
         Creates the workbook (and any missing parent directories) and the
         worksheet tab when they do not already exist. Existing worksheets that
@@ -178,7 +249,7 @@ def _set_cell_value(
     *,
     row: int,
     column: int,
-    value: str | None,
+    value: str | CellRichText | None,
 ) -> None:
     """Write `value` into a worksheet cell without disturbing its existing style.
 

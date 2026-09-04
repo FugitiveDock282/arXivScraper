@@ -151,6 +151,47 @@ class MatchAssessment:
         ], )
 
 
+@dataclass(frozen=True)
+class EvidenceQuote:
+    """A verbatim abstract fragment the AI flagged as supporting or counting against its rating.
+
+    Fields
+    ---
+    - `quote`:
+        A contiguous substring of the article's abstract (resolved verbatim at scoring time).
+    - `effect`:
+        `positive` (the passage supported the rating) or `negative` (it subtracted).
+    """
+
+    quote: str
+    effect: str
+
+    def to_dict(
+        self,
+    ) -> dict[str, str]:
+        return {
+            "quote": self.quote,
+            "effect": self.effect,
+        }
+
+    @classmethod
+    def from_mapping(
+        cls,
+        mapping: Mapping[str, Any],
+    ) -> "EvidenceQuote":
+        return cls(
+            quote=str(mapping["quote"]),
+            effect=str(mapping["effect"]),
+        )
+
+
+def is_supported_effect(
+    effect: str,
+) -> bool:
+    """Return whether `effect` is a recognised evidence direction (`positive`/`negative`)."""
+    return effect in ("positive", "negative")
+
+
 ##
 ## === ARTICLE DATACLASS
 ##
@@ -174,6 +215,9 @@ class Article:
         Float score assigned by the AI scorer; `None` until scored.
     - `ai_reason`:
         Short explanation from the AI scorer; `None` until scored.
+    - `ai_evidence`:
+        Verbatim abstract fragments flagged by the scorer, each tagged `positive`
+        or `negative`; empty until scored with rationale.
     """
 
     title: str
@@ -189,6 +233,7 @@ class Article:
     task_status: TaskStatus = TaskStatus.PENDING
     ai_rating: float | None = None
     ai_reason: str | None = None
+    ai_evidence: list[EvidenceQuote] = field(default_factory=list)
     config_reasons: dict[str, MatchReasons] = field(default_factory=dict)
 
 
@@ -306,6 +351,8 @@ def write_article_to_file(
         yaml_content["ai_rating"] = article.ai_rating
     if article.ai_reason is not None:
         yaml_content["ai_reason"] = article.ai_reason
+    if article.ai_evidence:
+        yaml_content["ai_evidence"] = [quote.to_dict() for quote in article.ai_evidence]
     ## expand config_reasons back to flat config_reason_{name} keys
     for config_name, reasons in article.config_reasons.items():
         yaml_content[f"config_reason_{config_name}"] = asdict(reasons)
@@ -356,6 +403,9 @@ def save_article(
             article.ai_rating = existing_article.ai_rating
         if existing_article.ai_reason is not None and article.ai_reason is None:
             article.ai_reason = existing_article.ai_reason
+        ## retain `ai_evidence` only if the incoming article brought none
+        if existing_article.ai_evidence and not article.ai_evidence:
+            article.ai_evidence = list(existing_article.ai_evidence)
         ## merge `config_reasons` from existing if not already present
         for config_name, reasons in existing_article.config_reasons.items():
             if config_name not in article.config_reasons:
@@ -476,6 +526,15 @@ def read_markdown_file(
         for key, value in meta_data.items()
         if key.startswith("config_reason_")
     }
+    ## collect any AI evidence quotes, skipping malformed entries
+    ai_evidence: list[EvidenceQuote] = []
+    for raw_quote in (meta_data.get("ai_evidence") or []):
+        if not isinstance(raw_quote, Mapping):
+            continue
+        try:
+            ai_evidence.append(EvidenceQuote.from_mapping(raw_quote))
+        except (KeyError, TypeError, ValueError):
+            continue
     ## find the character inside the brackets [] on the same line as `#task`
     task_status = TaskStatus.PENDING
     task_match = re.search(
@@ -501,6 +560,7 @@ def read_markdown_file(
         config_tags=meta_data.get("config_tags") or [],
         ai_rating=meta_data.get("ai_rating"),
         ai_reason=meta_data.get("ai_reason"),
+        ai_evidence=ai_evidence,
         task_status=task_status,
         config_reasons=config_reasons,
     )

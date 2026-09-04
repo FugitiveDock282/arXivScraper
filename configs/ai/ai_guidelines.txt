@@ -21,10 +21,18 @@ Requirements:
 - In the reason, include 1–3 short quoted snippets (at most 10 words each) from the abstract that support your judgment.
 - Keep the reason at most 3 sentences long.
 - Do not use LaTeX, math notation, or backslash characters anywhere in the reason string.
+- For every quote listed in "rationale", copy it character-for-character from the ABSTRACT that was provided to you (identical capitalization, spacing between words, and punctuation; no paraphrasing, no ellipses, no editorial brackets). Each "quote" must be a single contiguous run of the abstract, and it must appear verbatim inside the abstract.
 
 Output:
 Return ONLY a single JSON object with these keys and no extra text or markdown:
 {
   "rating": float between 0 and 10,
-  "reason": string
+  "reason": string,
+  "rationale": [{"quote": string, "effect": "positive" | "negative"}]
 }
+
+How to fill "rationale":
+- Quote the passages of the abstract that most influenced your rating. Use "positive" for a passage that added to the score (supported relevance) and "negative" for a passage that subtracted from it (signalled irrelevance or a drawback).
+- Provide up to 3 positive quotes and up to 3 negative quotes, each at most 12 words long.
+- If no passage subtracted from the score, return only positive quotes; if nothing is relevant, return an empty list for "rationale".
+- Each quote must be a verbatim substring of the ABSTRACT (see the requirement above). Do not quote text that is not in the abstract.
